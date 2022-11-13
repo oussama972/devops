@@ -1,0 +1,43 @@
+version: '3.1'
+services:
+  sonarqube:
+    container_name: sonarqube
+    image: "sonarqube:8.9.7-community"
+    ports:
+      - "9000:9000"
+    volumes:
+     - sonarqube_data:/opt/sonarqube/data
+     - sonarqube_extensions:/opt/sonarqube/extensions
+     - sonarqube_logs:/opt/sonarqube/logs
+
+  nexus:
+    container_name: nexus
+    image: sonatype/nexus3
+    volumes:
+      - "nexus-data:/nexus-data"
+    ports:
+      - "8081:8081"
+
+  Prometheus:
+    container_name: Prometheus
+    image: prom/prometheus
+    volumes:
+      - prometheus-data:/prometheus
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+
+    ports:
+      - "9090:9090"
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    volumes:
+      - grafana_data:/var/lib/grafana  
+    ports:
+      - "3000:3000"    
+volumes:
+  nexus-data:
+  sonarqube_logs:
+  sonarqube_extensions:
+  sonarqube_data:
+  prometheus-data:
+  grafana_data:
