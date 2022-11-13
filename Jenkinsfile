@@ -3,57 +3,59 @@
 properties([pipelineTriggers([githubPush()])])
 pipeline {
     agent any 
-        tools { 
-        maven "MyProjectDevops"
-        
-    } 
-  environment {
-      registry = "chamsbenrezigue/tpachat" 
+    tools {
+            maven "M2_HOME"
+            jdk "JAVA_HOME"
+        }
 
-        registryCredential = 'dockerhub' 
+     environment {
+      registry = "oussamakhabouchi/tpachat"
+
+        registryCredential = 'dockerhub'
 
         dockerImage = ''
 
-        DOCKERHUB_CREDENTIALS=credentials('dockerhub')
+        DOCKERHUB_CREDENTIALS="dckr_pat_d7KO-mlso2flhqMY7Uh77THlqUk"
         NEXUS_VERSION = "nexus3"
         NEXUS_PROTOCOL = "http"
-        NEXUS_URL = "172.10.0.140:8081"
+        NEXUS_URL = "192.168.6.117:8081"
         NEXUS_REPOSITORY = "maven-nexus-repo1"
         NEXUS_CREDENTIAL_ID = "nexus-user-credentials"
     }
-      
 
-        
+
+
     stages {
-        stage('git clone') {
+    stage('git clone') {
             steps {
-               git branch: 'chames-devops', url: 'https://github.com/iheeb9/devops_pipline'
-        
+               git branch: 'master', url: 'https://github.com/oussama972/devops'
+
             }
         }
-        stage('clean package') {
+
+    stage('clean package') {
             steps {
              sh 'mvn clean install -DskipTests=true'
-        
-        
+
+
             }
         }
-        
-        
-         stage('mvn test') {
+
+    stage('mvn test') {
             steps {
              sh 'mvn test'
-        
-        
+
+
             }
         }
-        stage('MVN SONARQUBE') {
+
+    stage('MVN SONARQUBE') {
             steps {
                 sh 'mvn sonar:sonar -Dsonar.login=admin -Dsonar.password=sonar'
             }
         }
-        
-          stage("Publish to Nexus Repository Manager") {
+
+    stage("Publish to Nexus Repository Manager") {
             steps {
                 script {
                     pom = readMavenPom file: "pom.xml";
@@ -88,107 +90,38 @@ pipeline {
                 }
             }
         }
-       
 
-     
+    stage('push docker hub') {
+            steps{
+               script {
 
-        
-         stage('push docker hub') {
-            steps {
-                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR -p $DOCKERHUB_CREDENTIALS_PSW'
-   
+                dockerImage = docker.build registry + ":$BUILD_NUMBER"
+
+                docker.withRegistry( '', registryCredential ) {
+
+                    dockerImage.push()
+
+                }
+
             }
         }
-        
-//                  stage('Building our image') {
-//                  			steps {
-//                  				script {
-//                  					dockerImage = docker.build registry + ":$BUILD_NUMBER"
-//                  					}
-//                  				}
-//                  		}
-                 		
-        
-
-//         stage('Deploy our image') {
-//                           steps {
-//                           script {
-//                               docker.withRegistry( '', registryCredential ) {
-//                               dockerImage.push()
-//                                 }
-//                              }
-//                            }
-
-//                          }
-        
-           stage(' docker-compose') {
+        }
+    stage(' docker-compose') {
             steps {
                 sh 'docker-compose -f docker-compose-app.yml up -d'
-   
+
             }
         }
-        
-               
-//          stage('Building our image') {
-//                  			steps {
-//                  				script {
-//                  					dockerImage = docker.build registry + ":$BUILD_NUMBER"
-//                  					}
-//                  				}
-//                  		}
-                 		
-        
 
-//         stage('Deploy our image') {
-//                           steps {
-//                           script {
-//                               docker.withRegistry( '', registryCredential ) {
-//                               dockerImage.push()
-//                                 }
-//                              }
-//                            }
 
-//                          }
-//            stage(' docker-compose') {
-//             steps {
-//                 sh 'docker build -t test .'
-   
-//             }
-//         } 
-               
-       
-//          stage('Building our image') {
-//                  			steps {
-//                  				script {
-//                  					dockerImage = docker.build registry + ":$BUILD_NUMBER"
-//                  					}
-//                  				}
-//                  		}
-//                  		stage('Deploy our image') {
-//                           steps {
-//                           script {
-//                               docker.withRegistry( '', registryCredential ) {
-//                               dockerImage.push()
-//                                 }
-//                              }
-//                            }
 
-//                          }
-//     stage       ('DOCKER COMPOSE') {
-//              steps {
-//                 sh 'docker-compose up  -d'
-//             }
-//         }
-        
-        
-        
      }
-    
-    
-      post{
+
+
+    post{
         always{
         
-        emailext body: 'jenkins', subject: 'jenkins', to: 'chames.benrezigue@esprit.tn'
+        emailext body: 'jenkins', subject: 'jenkins', to: 'oussama.khabouchi@esprit.tn'
         }
         
     }    
